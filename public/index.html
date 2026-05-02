@@ -1,0 +1,201 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Torrent in Real-Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900">
+
+    <div class="w-full max-w-4xl space-y-8">
+        <-- Header 
+        <div class="text-center space-y-4">
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                Magnet Stream Engine
+            </h1>
+            <p class="text-slate-400">Paste a magnet link. The backend will handle the rest.</p>
+            
+            <div class="flex gap-4 items-center justify-center mt-6">
+                <input type="text" id="magnet-input" placeholder="magnet:?xt=urn:btih:..." 
+                    class="w-full max-w-xl px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:border-blue-500 transition shadow-inner text-sm text-white">
+                <button id="stream-btn" 
+                    class="px-6 py-3 font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 transition shadow-lg text-white">
+                    Play
+                </button>
+            </div>
+        </div>
+
+        <!-- Status 
+        <div id="status-container" class="hidden flex flex-col space-y-3 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full text-xs font-bold text-slate-300 tracking-wide uppercase text-center">
+                <div class="flex flex-col"><span class="text-slate-500 mb-1">Speed</span><span id="download-speed" class="text-blue-400">0 MB/s</span></div>
+                <div class="flex flex-col"><span class="text-slate-500 mb-1">Downloaded</span><span id="downloaded-amount" class="text-purple-400">0 MB / 0 MB</span></div>
+                <div class="flex flex-col"><span class="text-slate-500 mb-1">Peers</span><span id="peers" class="text-green-400">0</span></div>
+                <div class="flex flex-col"><span class="text-slate-500 mb-1">Progress</span><span id="progress" class="text-white">0%</span></div>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden mt-2">
+                <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Video Player 
+        <div class="relative w-full aspect-video bg-black rounded-xl border border-slate-800 hidden shadow-2xl" id="video-container">
+            <video id="video-player" playsinline controls crossorigin></video>
+        </div>
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Torrent in Real-Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen text-white font-sans overflow-x-hidden selection:bg-blue-500 selection:text-white bg-[#050505]">
+
+    <!-- Deep Cinematic Background -->
+    <div class="fixed inset-0 z-[-1]">
+        <!-- Base dark gradient -->
+        <div class="absolute inset-0 bg-gradient-to-br from-[#0a0a1a] via-[#050505] to-black"></div>
+        <!-- Subtle ambient glows -->
+        <div class="moving-blob w-[40rem] h-[40rem] bg-blue-600/10 rounded-full blur-[100px] absolute -top-20 -left-20 mix-blend-screen pointer-events-none"></div>
+        <div class="moving-blob-2 w-[40rem] h-[40rem] bg-purple-600/10 rounded-full blur-[100px] absolute -bottom-20 -right-20 mix-blend-screen pointer-events-none"></div>
+    </div>
+
+    <!-- Hamburger Menu Button -->
+    <button id="menu-btn" class="fixed top-6 left-6 z-50 p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 hover:scale-105 transition-all shadow-2xl group">
+        <svg class="w-6 h-6 text-slate-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <!-- Side Drawer (Magnet Grabber) -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-[#0a0a0a]/90 backdrop-blur-2xl border-r border-white/5 transform -translate-x-full transition-transform duration-500 ease-out flex flex-col p-8 pt-28 shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        <h2 class="text-2xl font-bold tracking-tight mb-2 text-white">Magnet Grabber</h2>
+        <p class="text-sm text-slate-400 mb-8 leading-relaxed">Paste a website URL. We will scan the page and extract the magnet link automatically.</p>
+        
+        <div class="space-y-4">
+            <input type="url" id="url-input" placeholder="https://example.com/movie..." 
+                class="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-sm text-white placeholder-slate-500 shadow-inner">
+            <button id="grab-btn" 
+                class="w-full px-5 py-4 font-bold text-sm rounded-xl bg-white text-black hover:bg-slate-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] flex justify-center items-center gap-2">
+                <span id="grab-text">Extract Magnet</span>
+            </button>
+        </div>
+        <div id="grab-status" class="mt-5 text-sm font-medium text-center text-slate-400"></div>
+
+        <div class="mt-auto text-center text-xs text-slate-600 tracking-[0.2em] uppercase font-bold">
+            Made by <span class="text-slate-400">DARKTiger</span>
+        </div>
+    </div>
+
+    <!-- MAIN CENTERING WRAPPER -->
+    <main class="relative z-10 flex min-h-screen w-full items-center justify-center p-6 lg:p-12">
+        
+        <!-- Content Container (mx-auto keeps it centered) -->
+        <div class="w-full max-w-5xl mx-auto space-y-8 flex flex-col items-center">
+            
+            <!-- Header Panel (Apple TV Style Glass) -->
+            <div class="w-full glass-panel p-8 md:p-10 rounded-[2rem] border border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                
+                <!-- NEW LOGO SECTION -->
+                <div class="text-center flex flex-col items-center mb-10 space-y-4">
+                    <!-- Glass Effect Logo Pill -->
+                    <div class="inline-block px-10 py-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5 relative overflow-hidden group">
+                        <!-- Subtle background glow inside the glass -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        <!-- Glowing Gradient Text -->
+                        <h1 class="relative z-10 text-5xl md:text-6xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+                            Streamify
+                        </h1>
+                    </div>
+                    <p class="text-slate-400 font-medium text-lg">Paste a magnet link or use the grabber.</p>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+                    <!-- ... (Your input, select, and play button stay exactly the same below this) ... -->
+                    <!-- Magnet Input -->
+                    <input type="text" id="magnet-input" placeholder="magnet:?xt=urn:btih:..." 
+                        class="w-full md:w-[32rem] px-6 py-4 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm md:text-base text-white placeholder-slate-500 shadow-inner">
+                    
+                    <!-- Quality Switcher -->
+                    <select id="quality-selector" class="w-full md:w-auto px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer appearance-none shadow-inner">
+                        <option value="source" class="bg-slate-900">Source (Original)</option>
+                        <option value="720" class="bg-slate-900">720p (Faster)</option>
+                        <option value="480" class="bg-slate-900">480p (Fastest)</option>
+                    </select>
+
+                    <!-- Episode Selector (Hidden by default until a season is loaded) -->
+                    <select id="episode-selector" class="hidden w-full md:w-64 max-w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all cursor-pointer appearance-none shadow-inner text-ellipsis overflow-hidden whitespace-nowrap">
+                    </select>
+                    
+                    <!-- Play Button -->
+                    <button id="stream-btn" 
+                        class="w-full md:w-auto px-10 py-4 font-bold tracking-wide rounded-2xl bg-blue-600 hover:bg-blue-500 hover:scale-[1.02] active:scale-95 transition-all text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                        Play
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Dashboard -->
+            <div id="status-container" class="hidden w-full flex-col space-y-5 glass-panel p-6 rounded-3xl border border-white/5 shadow-2xl transition-all duration-500 opacity-0 transform translate-y-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full text-xs font-bold text-slate-400 tracking-wider uppercase text-center">
+                    <div class="flex flex-col bg-black/40 p-4 rounded-2xl border border-white/5"><span class="mb-2 text-[10px]">Speed</span><span id="download-speed" class="text-blue-400 text-sm">0 MB/s</span></div>
+                    <div class="flex flex-col bg-black/40 p-4 rounded-2xl border border-white/5"><span class="mb-2 text-[10px]">Downloaded</span><span id="downloaded-amount" class="text-purple-400 text-sm">0 MB / 0 MB</span></div>
+                    <div class="flex flex-col bg-black/40 p-4 rounded-2xl border border-white/5"><span class="mb-2 text-[10px]">Peers</span><span id="peers" class="text-green-400 text-sm">0</span></div>
+                    <div class="flex flex-col bg-black/40 p-4 rounded-2xl border border-white/5"><span class="mb-2 text-[10px]">Progress</span><span id="progress" class="text-white text-sm">0%</span></div>
+                </div>
+                <!-- Premium Progress Bar -->
+                <div class="w-full bg-black/60 rounded-full h-2.5 overflow-hidden shadow-inner border border-white/5">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-300 relative overflow-hidden" style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cinematic Video Player -->
+            <div class="relative w-full aspect-video bg-black rounded-[2rem] border border-white/10 hidden shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-700 opacity-0 transform scale-95" id="video-container">
+                <video id="video-player" playsinline controls crossorigin></video>
+            </div>
+            
+        </div>
+    </main>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script src="app.js"></script>
+    
+    <!-- Small inline script to handle smooth fade-in of elements -->
+    <script>
+        // Observe changes to the 'hidden' class to trigger animations
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const el = mutation.target;
+                    if (!el.classList.contains('hidden')) {
+                        // Small delay to allow display:block to apply before animating opacity
+                        setTimeout(() => {
+                            el.classList.remove('opacity-0', 'translate-y-4', 'scale-95');
+                            el.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+                        }, 50);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(document.getElementById('status-container'), { attributes: true });
+        observer.observe(document.getElementById('video-container'), { attributes: true });
+    </script>
+</body>
+</html>
